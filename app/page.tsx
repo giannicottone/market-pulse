@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { LoadingState } from "@/app/components/LoadingState";
 import { Results } from "@/app/components/Results";
 import { SearchBar } from "@/app/components/SearchBar";
-import type { AnalysisResult } from "@/lib/analyze";
+import type { AnalysisResult, ApiResponse } from "@/lib/analyze";
 
 type ViewState = "idle" | "loading" | "results";
 
@@ -69,12 +69,13 @@ export default function Home() {
         return;
       }
 
-      if (!response.ok) {
-        const payload = (await response.json()) as { error?: string };
-        throw new Error(payload.error ?? "Unable to analyze this query.");
-      }
+      const payload = await safeParseJson(response);
 
-      const payload = (await response.json()) as AnalysisResult;
+      if (!response.ok || !payload.success) {
+        throw new Error(
+          payload.success ? "Unable to analyze this query." : payload.error,
+        );
+      }
 
       setIsPanelVisible(false);
 
@@ -84,7 +85,7 @@ export default function Home() {
             return;
           }
 
-          setResult(payload);
+          setResult(payload.data);
           setView("results");
           setIsPanelVisible(true);
         }, 220),
@@ -183,8 +184,8 @@ export default function Home() {
                 </h2>
                 <p className="mx-auto mt-4 max-w-2xl text-base leading-8 text-slate-600">
                   MarketPulse turns a simple query into a fast product-style
-                  snapshot with a score, trend signal, platform breakdown, and
-                  related opportunity ideas.
+                  snapshot with a score, trend signal, source breakdown, and
+                  confidence-backed diagnostics.
                 </p>
                 {error ? (
                   <div className="mx-auto mt-6 max-w-2xl rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4 text-sm leading-7 text-rose-700">
@@ -204,4 +205,12 @@ function wait(duration: number) {
   return new Promise((resolve) => {
     window.setTimeout(resolve, duration);
   });
+}
+
+async function safeParseJson(response: Response): Promise<ApiResponse> {
+  try {
+    return (await response.json()) as ApiResponse;
+  } catch {
+    throw new Error("MarketPulse returned an invalid response payload.");
+  }
 }

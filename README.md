@@ -1,173 +1,95 @@
 # MarketPulse
 
-A lightweight tool to validate whether an idea has real market interest before investing time or money into it.
-
----
-
-## Overview
-
-MarketPulse aggregates public signals from search trends and online discussions to provide a quick, directional answer to a simple question:
-
-Is there real interest in this idea, or just noise?
-
-The app takes a keyword or concept and returns:
-
-* An interest score (0–100)
-* Trend direction (rising, stable, declining)
-* Platform-level signal breakdown
-* Related emerging ideas
-* Direct links to underlying data sources
-
-This is not meant to be perfectly accurate. It is meant to provide fast, directional insight.
-
----
-
-## Purpose of This Project
-
-This project was built as an experiment in AI-assisted development, specifically to evaluate how effectively tools like Codex can:
-
-* Accelerate full-stack development
-* Assist with debugging and iteration
-* Maintain structure across multiple components
-* Produce something that feels like a real product, not just a demo
-
-The goal was not just to generate code, but to:
-
-* Build something usable
-* Refine it through iteration
-* Identify where AI helps vs where human judgment is required
-
----
-
-## What This Tests
-
-This project intentionally explores the full lifecycle:
-
-### Code Generation
-
-Using AI to scaffold:
-
-* Next.js frontend
-* Component structure
-* API routes
-
-### Debugging
-
-Iterating through:
-
-* environment setup issues
-* package conflicts
-* runtime errors
-* data normalization problems
-
-### Product Thinking
-
-Refining:
-
-* UI clarity
-* loading states
-* perceived responsiveness
-* usefulness of output
-
-### Signal Processing
-
-Transforming raw data into:
-
-* simple scores
-* readable labels
-* actionable output
-
----
+MarketPulse is a lightweight market-signal explorer built with Next.js and TypeScript. It combines search intent from Google Trends with filtered discussion signal from Reddit to produce a fast, explainable interest score for a keyword.
 
 ## Features
 
-* Keyword-based market validation
-* Google Trends signal analysis
-* Reddit discussion signal analysis
-* Composite scoring system
-* Clean, product-focused UI
-* Transparent data source links
+- Server-side signal collection
+- Independent source normalization
+- Transparent weighted scoring
+- Reddit quality filters and subreddit whitelist
+- In-memory caching with in-flight deduplication
+- Timeout and retry handling for upstream requests
+- Source links for verification
 
----
+## How Scoring Works
 
-## Data Sources
+MarketPulse normalizes each source independently to a `0-1` scale before combining them.
 
-All data is derived from publicly available sources:
+- Google Trends combines average interest with momentum:
+  `((averageInterest / 100) * 0.7) + (sigmoid(momentum) * 0.3)`
+- Reddit uses `log(upvotes + comments + 1)` to compress outsized posts, caps post engagement at the 95th percentile, averages engagement per query, then applies:
+  `sigmoid(averageEngagement / 5)`
+- Reddit is then confidence-weighted using sample size:
+  `min(1, matchedPosts / 5)`
 
-* Google Trends
-* Reddit search (top posts, weekly window)
+The final score uses a transparent weighted model:
 
-The app includes direct links so users can verify the underlying signals themselves.
+```text
+score = (0.6 * google_trends) + (0.4 * reddit)
+```
 
----
+The API returns:
 
-## Tech Stack
+- `score`: final score on a `0-100` scale
+- `trend`: `rising`, `stable`, or `declining`
+- `breakdown.totalScore`: weighted score on a `0-100` scale before rounding to `score`
+- `breakdown.sources`: per-source contribution values on a `0-100` scale
+- `diagnostics`: raw supporting metrics used to explain the result
+- `confidence`: overall confidence from Reddit sample size and Trends variance
 
-* Next.js
-* React
-* Tailwind CSS
-* Node.js API routes
+Scores are relative per-query and not comparable across keywords.
 
-No authentication, no external databases, and no paid APIs were used. The focus was speed, clarity, and execution.
+## Reddit Reliability Rules
 
----
+Reddit results are filtered before scoring:
 
-## How to Run
+- posts below the minimum score threshold are removed
+- only whitelisted subreddits are counted
+- engagement is based on `log(upvotes + comments + 1)`, not raw totals
+- per-post engagement is capped at the 95th percentile before averaging
+- low sample sizes reduce Reddit influence in the final score
 
+This keeps broad or noisy queries from overstating Reddit demand.
+
+## Caching
+
+MarketPulse caches results in memory for 10 minutes and also deduplicates in-flight requests for the same keyword so repeated searches do not trigger duplicate upstream calls.
+
+## Environment
+
+Copy `.env.example` to `.env.local` and adjust values if needed.
+
+Key settings:
+
+- `MARKET_PULSE_GOOGLE_WEIGHT`
+- `MARKET_PULSE_REDDIT_WEIGHT`
+- `MARKET_PULSE_CACHE_TTL_MS`
+- `MARKET_PULSE_REQUEST_TIMEOUT_MS`
+- `MARKET_PULSE_RETRY_ATTEMPTS`
+- `MARKET_PULSE_REDDIT_MIN_SCORE`
+- `MARKET_PULSE_REDDIT_WHITELIST`
+
+## Run Locally
+
+```bash
 npm install
 npm run dev
+```
 
-Then open:
+Then open `http://localhost:3000`.
 
-http://localhost:3000
+## Project Structure
 
----
+- `app/api/analyze/route.ts`: thin API route with validation, cache lookup, and response handling
+- `lib/config.ts`: environment parsing and validation
+- `lib/services/trendsService.ts`: Google Trends fetching and normalization
+- `lib/services/redditService.ts`: Reddit fetching, filtering, and normalization
+- `lib/services/scoringService.ts`: weighted scoring and response construction
+- `lib/services/cacheService.ts`: in-memory result cache and in-flight dedupe
 
-## Key Design Decisions
+## Notes
 
-* Product-first approach: UI and experience were prioritized before backend integration
-* Simple scoring model: clarity over complexity
-* No overengineering: minimal dependencies, no unnecessary abstractions
-* Transparency: users can inspect all underlying data sources
-
----
-
-## Limitations
-
-* Data is approximate and not normalized at scale
-* No caching or rate limiting implemented
-* Reddit and Trends signals are simplified
-* Not production-ready
-
----
-
-## Takeaways
-
-This project demonstrates that AI-assisted development is highly effective for:
-
-* speeding up initial builds
-* generating boilerplate
-* iterating on UI quickly
-
-However, it still requires human input for:
-
-* architecture decisions
-* product direction
-* debugging edge cases
-* determining what actually matters
-
----
-
-## Future Improvements
-
-* Add caching layer for repeated queries
-* Improve scoring accuracy
-* Add historical comparisons
-* Expand data sources (e.g. YouTube, Twitter/X)
-* Introduce persistence layer
-
----
-
-## Final Note
-
-This is not a finished product. It is a deliberate experiment in building something quickly, validating ideas, and understanding where AI meaningfully contributes to the development process.
+- No authentication or database is required.
+- No paid APIs are used.
+- Signals are directional and intended for fast market validation, not for financial advice.

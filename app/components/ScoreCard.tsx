@@ -28,7 +28,7 @@ export function ScoreCard({ score, trend }: ScoreCardProps) {
         : "from-rose-400 to-rose-500";
 
   return (
-    <section className="flex h-full flex-col rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-[0_16px_40px_rgba(15,23,42,0.08)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_22px_50px_rgba(15,23,42,0.10)]">
+    <section className="flex h-full flex-col rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_16px_40px_rgba(15,23,42,0.08)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_22px_50px_rgba(15,23,42,0.10)]">
       <p className="text-center text-xs font-semibold uppercase tracking-[0.22em] text-cyan-700">
         Market Score
       </p>
@@ -46,12 +46,12 @@ export function ScoreCard({ score, trend }: ScoreCardProps) {
         <div
           className={`mt-6 rounded-full border px-4 py-2 text-sm font-semibold ${scoreTone}`}
         >
-          Trend: {trend}
+          Trend: {trend.charAt(0).toUpperCase() + trend.slice(1)}
         </div>
       </div>
       <div className="mt-6 h-3 overflow-hidden rounded-full bg-slate-100">
         <div
-          className={`h-full rounded-full bg-gradient-to-r ${progressTone} transition-all duration-500`}
+          className={`h-full rounded-full bg-linear-to-r ${progressTone} transition-all duration-500`}
           style={{ width: `${score}%` }}
         />
       </div>
