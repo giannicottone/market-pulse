@@ -43,10 +43,6 @@ export function Results({ result, onReset }: ResultsProps) {
                 {(result.breakdown.weights.youtube * 100).toFixed(0)}%
               </span>
             </div>
-            <div className="flex items-center justify-between gap-4">
-              <span className="text-slate-500">Composite score</span>
-              <span className="font-medium">{result.breakdown.totalScore}</span>
-            </div>
           </div>
           {result.flags.length > 0 ? (
             <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm leading-7 text-amber-900">
@@ -82,13 +78,13 @@ export function Results({ result, onReset }: ResultsProps) {
             label="Google Trends"
             normalizedValue={result.breakdown.sources.google / 100}
             detail={`Current ${result.diagnostics.google.currentInterest.toFixed(1)} | Peak ${result.diagnostics.google.peakInterest.toFixed(1)} | momentum ${result.diagnostics.google.momentum.toFixed(2)}`}
-            helper={`30-day avg ${result.diagnostics.google.averageInterest.toFixed(1)} | recent avg ${result.diagnostics.google.recentAverageInterest.toFixed(1)} | variance ${result.diagnostics.google.variance.toFixed(1)}`}
+            helper={`30-day avg ${result.diagnostics.google.averageInterest.toFixed(1)} | recent avg ${result.diagnostics.google.recentAverageInterest.toFixed(1)}`}
           />
           <PlatformCard
             label="YouTube"
             normalizedValue={result.breakdown.sources.youtube / 100}
-            detail={`Averaging ${(result.diagnostics.youtube.averageViews / 1000).toFixed(1)}k views`}
-            helper={`Top video ${(result.diagnostics.youtube.topVideoViews / 1000).toFixed(1)}k views | avg ${result.diagnostics.youtube.averageLikes.toFixed(0)} likes and ${result.diagnostics.youtube.averageComments.toFixed(0)} comments`}
+            detail={`Average ${formatCompactNumber(result.diagnostics.youtube.averageViews)} views`}
+            helper={`Top video ${formatCompactNumber(result.diagnostics.youtube.topVideoViews)} views | avg ${formatCompactNumber(result.diagnostics.youtube.averageLikes)} likes and ${formatCompactNumber(result.diagnostics.youtube.averageComments)} comments`}
           />
         </div>
       </section>
@@ -124,6 +120,13 @@ function sourceLabel(platform: AnalysisResult["sources"][number]["platform"]) {
   }
 
   return "View Source";
+}
+
+function formatCompactNumber(value: number) {
+  return new Intl.NumberFormat("en-US", {
+    notation: "compact",
+    maximumFractionDigits: value >= 1000 ? 1 : 0,
+  }).format(value);
 }
 
 function SourceLink({ href, label }: { href: string; label: string }) {
