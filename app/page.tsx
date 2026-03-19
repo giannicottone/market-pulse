@@ -1,65 +1,207 @@
-import Image from "next/image";
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+
+import { LoadingState } from "@/app/components/LoadingState";
+import { Results } from "@/app/components/Results";
+import { SearchBar } from "@/app/components/SearchBar";
+import type { AnalysisResult } from "@/lib/analyze";
+
+type ViewState = "idle" | "loading" | "results";
 
 export default function Home() {
+  const [query, setQuery] = useState("");
+  const [submittedQuery, setSubmittedQuery] = useState("");
+  const [view, setView] = useState<ViewState>("idle");
+  const [isPanelVisible, setIsPanelVisible] = useState(true);
+  const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const timeoutRefs = useRef<number[]>([]);
+  const requestIdRef = useRef(0);
+
+  const clearTimers = () => {
+    timeoutRefs.current.forEach((timer) => window.clearTimeout(timer));
+    timeoutRefs.current = [];
+  };
+
+  useEffect(() => {
+    return () => {
+      clearTimers();
+    };
+  }, []);
+
+  async function handleAnalyze() {
+    const normalizedQuery = query.trim();
+
+    if (!normalizedQuery) {
+      return;
+    }
+
+    const requestId = requestIdRef.current + 1;
+    requestIdRef.current = requestId;
+
+    clearTimers();
+    setSubmittedQuery(normalizedQuery);
+    setError(null);
+    setIsPanelVisible(false);
+
+    timeoutRefs.current.push(
+      window.setTimeout(() => {
+        setView("loading");
+        setResult(null);
+        setIsPanelVisible(true);
+      }, 180),
+    );
+
+    try {
+      const [response] = await Promise.all([
+        fetch("/api/analyze", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ query: normalizedQuery }),
+        }),
+        wait(2400),
+      ]);
+
+      if (requestId !== requestIdRef.current) {
+        return;
+      }
+
+      if (!response.ok) {
+        const payload = (await response.json()) as { error?: string };
+        throw new Error(payload.error ?? "Unable to analyze this query.");
+      }
+
+      const payload = (await response.json()) as AnalysisResult;
+
+      setIsPanelVisible(false);
+
+      timeoutRefs.current.push(
+        window.setTimeout(() => {
+          if (requestId !== requestIdRef.current) {
+            return;
+          }
+
+          setResult(payload);
+          setView("results");
+          setIsPanelVisible(true);
+        }, 220),
+      );
+    } catch (analysisError) {
+      if (requestId !== requestIdRef.current) {
+        return;
+      }
+
+      setIsPanelVisible(false);
+
+      timeoutRefs.current.push(
+        window.setTimeout(() => {
+          if (requestId !== requestIdRef.current) {
+            return;
+          }
+
+          setView("idle");
+          setResult(null);
+          setError(
+            analysisError instanceof Error
+              ? analysisError.message
+              : "Unable to analyze this query.",
+          );
+          setIsPanelVisible(true);
+        }, 220),
+      );
+    }
+  }
+
+  function handleReset() {
+    clearTimers();
+    requestIdRef.current += 1;
+    setQuery("");
+    setSubmittedQuery("");
+    setResult(null);
+    setError(null);
+    setView("idle");
+    setIsPanelVisible(true);
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <main className="mx-auto flex min-h-screen w-full max-w-7xl flex-col justify-center px-4 py-6 sm:px-8 sm:py-10 lg:px-12">
+      <section className="relative overflow-hidden rounded-[2rem] border border-white/70 bg-white/88 p-6 shadow-[0_28px_90px_rgba(15,23,42,0.12)] backdrop-blur sm:p-10 lg:p-12">
+        <div className="absolute inset-x-0 top-0 h-40 bg-[radial-gradient(circle_at_top,_rgba(14,165,233,0.18),_transparent_58%)]" />
+        <div className="absolute -right-10 top-20 h-40 w-40 rounded-full bg-emerald-200/30 blur-3xl" />
+        <div className="relative mx-auto flex w-full max-w-4xl flex-col items-center">
+          <div className="inline-flex items-center rounded-full border border-cyan-100 bg-cyan-50/90 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-cyan-800">
+            Market Validation Assistant
+          </div>
+          <h1 className="mt-7 text-center text-4xl font-semibold tracking-[-0.04em] text-slate-950 sm:text-6xl">
+            MarketPulse
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="mt-6 max-w-2xl text-center text-base leading-8 text-slate-600 sm:text-lg">
+            Validate market interest before you build or spend
           </p>
+
+          <SearchBar
+            value={query}
+            onChange={setQuery}
+            onSubmit={handleAnalyze}
+            isLoading={view === "loading"}
+          />
+
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-3 text-sm text-slate-500">
+            <span className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2">
+              Try: AI interview prep
+            </span>
+            <span className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2">
+              DTC electrolyte powder
+            </span>
+            <span className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2">
+              B2B expense automation
+            </span>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+
+        <div className="relative mx-auto mt-10 w-full max-w-5xl sm:mt-14">
+          <div
+            key={view === "results" ? `results-${submittedQuery}` : view}
+            className={`transition-opacity duration-300 ${
+              isPanelVisible ? "opacity-100" : "opacity-0"
+            }`}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            {view === "loading" ? (
+              <LoadingState query={submittedQuery} />
+            ) : view === "results" && result ? (
+              <Results result={result} onReset={handleReset} />
+            ) : (
+              <section className="rounded-[1.75rem] border border-dashed border-slate-200 bg-slate-50/80 px-6 py-10 text-center sm:px-8 sm:py-12">
+                <p className="text-sm font-semibold uppercase tracking-[0.22em] text-cyan-700">
+                  Instant Market Read
+                </p>
+                <h2 className="mt-4 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
+                  Search a topic to preview demand and conversation strength
+                </h2>
+                <p className="mx-auto mt-4 max-w-2xl text-base leading-8 text-slate-600">
+                  MarketPulse turns a simple query into a fast product-style
+                  snapshot with a score, trend signal, platform breakdown, and
+                  related opportunity ideas.
+                </p>
+                {error ? (
+                  <div className="mx-auto mt-6 max-w-2xl rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4 text-sm leading-7 text-rose-700">
+                    {error}
+                  </div>
+                ) : null}
+              </section>
+            )}
+          </div>
         </div>
-      </main>
-    </div>
+      </section>
+    </main>
   );
+}
+
+function wait(duration: number) {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, duration);
+  });
 }
