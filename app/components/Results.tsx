@@ -13,7 +13,7 @@ export function Results({ result, onReset }: ResultsProps) {
     <section className="mx-auto grid w-full max-w-5xl gap-6 sm:gap-8">
       <div className="grid gap-6 xl:grid-cols-[0.82fr_1.18fr]">
         <ScoreCard score={result.score} trend={result.trend} />
-        <section className="flex h-full flex-col rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-[0_16px_40px_rgba(15,23,42,0.08)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_22px_50px_rgba(15,23,42,0.10)]">
+        <section className="flex h-full flex-col rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_16px_40px_rgba(15,23,42,0.08)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_22px_50px_rgba(15,23,42,0.10)]">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-700">
             Summary
           </p>
@@ -68,7 +68,7 @@ export function Results({ result, onReset }: ResultsProps) {
         </section>
       </div>
 
-      <section className="rounded-[1.5rem] border border-slate-200 bg-slate-50/85 p-5 sm:p-6">
+      <section className="rounded-3xl border border-slate-200 bg-slate-50/85 p-5 sm:p-6">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-700">
             Signal Breakdown
@@ -93,7 +93,7 @@ export function Results({ result, onReset }: ResultsProps) {
         </div>
       </section>
 
-      <section className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-[0_16px_40px_rgba(15,23,42,0.08)] sm:p-6">
+      <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_16px_40px_rgba(15,23,42,0.08)] sm:p-6">
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-700">
           Data Sources
         </p>

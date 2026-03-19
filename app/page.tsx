@@ -129,8 +129,8 @@ export default function Home() {
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-7xl flex-col justify-center px-4 py-6 sm:px-8 sm:py-10 lg:px-12">
-      <section className="relative overflow-hidden rounded-[2rem] border border-white/70 bg-white/88 p-6 shadow-[0_28px_90px_rgba(15,23,42,0.12)] backdrop-blur sm:p-10 lg:p-12">
-        <div className="absolute inset-x-0 top-0 h-40 bg-[radial-gradient(circle_at_top,_rgba(14,165,233,0.18),_transparent_58%)]" />
+      <section className="relative overflow-hidden rounded-4xl border border-white/70 bg-white/88 p-6 shadow-[0_28px_90px_rgba(15,23,42,0.12)] backdrop-blur sm:p-10 lg:p-12">
+        <div className="absolute inset-x-0 top-0 h-40 bg-[radial-gradient(circle_at_top,rgba(14,165,233,0.18),transparent_58%)]" />
         <div className="absolute -right-10 top-20 h-40 w-40 rounded-full bg-emerald-200/30 blur-3xl" />
         <div className="relative mx-auto flex w-full max-w-4xl flex-col items-center">
           <div className="inline-flex items-center rounded-full border border-cyan-100 bg-cyan-50/90 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-cyan-800">
