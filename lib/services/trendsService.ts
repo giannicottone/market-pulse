@@ -5,6 +5,9 @@ import { appConfig } from "@/lib/config";
 export type TrendsSignal = {
   normalizedValue: number;
   averageInterest: number;
+  recentAverageInterest: number;
+  currentInterest: number;
+  peakInterest: number;
   momentum: number;
   variance: number;
   trend: "rising" | "stable" | "declining";
@@ -40,6 +43,7 @@ export async function fetchTrendsSignal(keyword: string): Promise<TrendsSignal> 
       const sliceSize = Math.max(1, Math.floor(values.length / 3));
       const head = average(values.slice(0, sliceSize));
       const tail = average(values.slice(-sliceSize));
+      const recentValues = values.slice(-Math.max(1, Math.floor(values.length / 4)));
       const momentum = (tail - head) / Math.max(head, 1);
       const normalizedValue = clamp(
         roundToTwoDecimals(
@@ -51,6 +55,9 @@ export async function fetchTrendsSignal(keyword: string): Promise<TrendsSignal> 
       return {
         normalizedValue,
         averageInterest: roundToTwoDecimals(averageInterest),
+        recentAverageInterest: roundToTwoDecimals(average(recentValues)),
+        currentInterest: roundToTwoDecimals(values.at(-1) ?? 0),
+        peakInterest: roundToTwoDecimals(Math.max(...values)),
         momentum: roundToTwoDecimals(momentum),
         variance,
         trend:

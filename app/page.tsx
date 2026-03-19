@@ -149,18 +149,6 @@ export default function Home() {
             onSubmit={handleAnalyze}
             isLoading={view === "loading"}
           />
-
-          <div className="mt-5 flex flex-wrap items-center justify-center gap-3 text-sm text-slate-500">
-            <span className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2">
-              Try: AI interview prep
-            </span>
-            <span className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2">
-              DTC electrolyte powder
-            </span>
-            <span className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2">
-              B2B expense automation
-            </span>
-          </div>
         </div>
 
         <div className="relative mx-auto mt-10 w-full max-w-5xl sm:mt-14">

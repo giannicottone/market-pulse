@@ -9,12 +9,12 @@ import {
   setCachedValue,
   setInFlightValue,
 } from "@/lib/services/cacheService";
-import { fetchRedditSignal } from "@/lib/services/redditService";
-import {
-  buildAnalysisResult,
-  buildUnavailableRedditSignal,
-} from "@/lib/services/scoringService";
+import { buildAnalysisResult } from "@/lib/services/scoringService";
 import { fetchTrendsSignal } from "@/lib/services/trendsService";
+import {
+  buildUnavailableYouTubeSignal,
+  fetchYouTubeSignal,
+} from "@/lib/services/youtubeService";
 
 export const runtime = "nodejs";
 
@@ -81,7 +81,7 @@ export async function POST(request: Request) {
         keyword: cacheKey,
         score: result.score,
         google: result.breakdown.sources.google,
-        reddit: result.breakdown.sources.reddit,
+        youtube: result.breakdown.sources.youtube,
       });
 
       return respondError(
@@ -124,28 +124,32 @@ async function buildLiveAnalysis(query: string): Promise<AnalysisResult> {
     throw new Error("Google Trends data unavailable");
   }
 
-  let reddit = buildUnavailableRedditSignal();
-  let redditUnavailable = false;
+  let youtube = buildUnavailableYouTubeSignal();
+  let youtubeUnavailable = false;
 
-  try {
-    reddit = await fetchRedditSignal(query);
-  } catch (error) {
-    redditUnavailable = true;
+  const youtubeResult = await fetchYouTubeSignal(query)
+    .then((value) => ({ status: "fulfilled" as const, value }))
+    .catch((reason) => ({ status: "rejected" as const, reason }));
+
+  if (youtubeResult.status === "fulfilled") {
+    youtube = youtubeResult.value;
+  } else {
+    youtubeUnavailable = true;
     console.warn("market-pulse partial failure", {
       query,
-      source: "reddit",
-      error: getErrorMessage(error),
+      source: "youtube",
+      error: getErrorMessage(youtubeResult.reason),
     });
   }
 
   const result = buildAnalysisResult({
     query,
     google,
-    reddit,
+    youtube,
   });
 
-  if (redditUnavailable) {
-    result.flags.push("Reddit data unavailable");
+  if (youtubeUnavailable) {
+    result.flags.push("YouTube data unavailable");
   }
 
   return result;
@@ -252,7 +256,7 @@ function isCacheableResult(result: AnalysisResult) {
     Number.isFinite(result.confidence) &&
     isNormalized(result.breakdown.totalScore) &&
     isNormalized(result.breakdown.sources.google) &&
-    isNormalized(result.breakdown.sources.reddit)
+    isNormalized(result.breakdown.sources.youtube)
   );
 }
 

@@ -38,9 +38,9 @@ export function Results({ result, onReset }: ResultsProps) {
               </span>
             </div>
             <div className="flex items-center justify-between gap-4">
-              <span className="text-slate-500">Reddit weight</span>
+              <span className="text-slate-500">YouTube weight</span>
               <span className="font-medium">
-                {(result.breakdown.weights.reddit * 100).toFixed(0)}%
+                {(result.breakdown.weights.youtube * 100).toFixed(0)}%
               </span>
             </div>
             <div className="flex items-center justify-between gap-4">
@@ -81,14 +81,14 @@ export function Results({ result, onReset }: ResultsProps) {
           <PlatformCard
             label="Google Trends"
             normalizedValue={result.breakdown.sources.google / 100}
-            detail={`Average interest ${result.diagnostics.google.averageInterest.toFixed(1)} with momentum ${result.diagnostics.google.momentum.toFixed(2)}`}
-            helper={`Composite normalization with variance ${result.diagnostics.google.variance.toFixed(1)}`}
+            detail={`Current ${result.diagnostics.google.currentInterest.toFixed(1)} | Peak ${result.diagnostics.google.peakInterest.toFixed(1)} | momentum ${result.diagnostics.google.momentum.toFixed(2)}`}
+            helper={`30-day avg ${result.diagnostics.google.averageInterest.toFixed(1)} | recent avg ${result.diagnostics.google.recentAverageInterest.toFixed(1)} | variance ${result.diagnostics.google.variance.toFixed(1)}`}
           />
           <PlatformCard
-            label="Reddit"
-            normalizedValue={result.breakdown.sources.reddit / 100}
-            detail={`${result.diagnostics.reddit.matchedPosts} matched posts, ${result.diagnostics.reddit.filteredPosts} filtered`}
-            helper={`Average log engagement ${result.diagnostics.reddit.averageEngagementScore.toFixed(2)} | adjusted ${(result.diagnostics.reddit.adjustedScore * 100).toFixed(0)}/100`}
+            label="YouTube"
+            normalizedValue={result.breakdown.sources.youtube / 100}
+            detail={`Averaging ${(result.diagnostics.youtube.averageViews / 1000).toFixed(1)}k views`}
+            helper={`Top video ${(result.diagnostics.youtube.topVideoViews / 1000).toFixed(1)}k views | avg ${result.diagnostics.youtube.averageLikes.toFixed(0)} likes and ${result.diagnostics.youtube.averageComments.toFixed(0)} comments`}
           />
         </div>
       </section>
@@ -105,17 +105,25 @@ export function Results({ result, onReset }: ResultsProps) {
             <SourceLink
               key={source.platform}
               href={source.link}
-              label={
-                source.platform === "google"
-                  ? "View Google Trends"
-                  : "View Reddit Discussions"
-              }
+              label={sourceLabel(source.platform)}
             />
           ))}
         </div>
       </section>
     </section>
   );
+}
+
+function sourceLabel(platform: AnalysisResult["sources"][number]["platform"]) {
+  if (platform === "google") {
+    return "View Google Trends";
+  }
+
+  if (platform === "youtube") {
+    return "View YouTube Results";
+  }
+
+  return "View Source";
 }
 
 function SourceLink({ href, label }: { href: string; label: string }) {

@@ -1,6 +1,6 @@
 export type Trend = "rising" | "stable" | "declining";
 
-export type SourceKey = "google" | "reddit";
+export type SourceKey = "google" | "youtube";
 
 export type SourceLink = {
   platform: SourceKey;
@@ -11,11 +11,11 @@ export type Breakdown = {
   totalScore: number;
   weights: {
     google: number;
-    reddit: number;
+    youtube: number;
   };
   sources: {
     google: number;
-    reddit: number;
+    youtube: number;
   };
 };
 
@@ -29,15 +29,20 @@ export type AnalysisResult = {
   diagnostics: {
     google: {
       averageInterest: number;
+      recentAverageInterest: number;
+      currentInterest: number;
+      peakInterest: number;
       momentum: number;
       variance: number;
       normalizedValue: number;
     };
-    reddit: {
-      matchedPosts: number;
-      filteredPosts: number;
+    youtube: {
+      matchedVideos: number;
       averageEngagementScore: number;
-      adjustedScore: number;
+      averageViews: number;
+      averageLikes: number;
+      averageComments: number;
+      topVideoViews: number;
       normalizedValue: number;
     };
   };
